@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ti:app xmlns:ti="http://ti.appcelerator.org">
+    <property name="acs-oauth-secret-production" type="string">S5Cu7En7r1gM35EsFCol3eId7LbP0huB</property>
+    <property name="acs-oauth-key-production" type="string">4Nmv6PIcVUHhhH7GZeyIliVKoLV97P0T</property>
+    <property name="acs-api-key-production" type="string">Wr3bh8OJYp7Djw5i2tLcfj2nIC9SCY2D</property>
+    <property name="acs-oauth-secret-development" type="string">SSNKP8HhWt3uYc39UmyXbEKJYu4wWMIH</property>
+    <property name="acs-oauth-key-development" type="string">FbfCHKjD9pTCXP62WCqRGyvNZMJaUQrl</property>
+    <property name="acs-api-key-development" type="string">V6I1EZ1Q4uxXjUYQcOjafD71uYFW9Fo3</property>
+    <deployment-targets>
+        <target device="mobileweb">true</target>
+        <target device="iphone">true</target>
+        <target device="ipad">true</target>
+        <target device="android">true</target>
+        <target device="blackberry">false</target>
+    </deployment-targets>
+    <sdk-version>2.1.1.GA</sdk-version>
+    <id>com.filigranltd.tastecardapp</id>
+    <name>TasteCardApp</name>
+    <version>1.0</version>
+    <publisher>serglohm</publisher>
+    <url>http://tastecardapp.filigranltd.com</url>
+    <description>not specified</description>
+    <copyright>2012 by serglohm</copyright>
+    <icon>appicon.png</icon>
+    <persistent-wifi>false</persistent-wifi>
+    <prerendered-icon>false</prerendered-icon>
+    <statusbar-style>default</statusbar-style>
+    <statusbar-hidden>false</statusbar-hidden>
+    <fullscreen>false</fullscreen>
+    <navbar-hidden>false</navbar-hidden>
+    <analytics>true</analytics>
+    <guid>09b30186-1790-4293-9327-c1898dbdcdd2</guid>
+    <property name="ti.ui.defaultunit">system</property>
+    <iphone>
+        <orientations device="iphone">
+            <orientation>Ti.UI.PORTRAIT</orientation>
+        </orientations>
+        <orientations device="ipad">
+            <orientation>Ti.UI.PORTRAIT</orientation>
+            <orientation>Ti.UI.UPSIDE_PORTRAIT</orientation>
+            <orientation>Ti.UI.LANDSCAPE_LEFT</orientation>
+            <orientation>Ti.UI.LANDSCAPE_RIGHT</orientation>
+        </orientations>
+    </iphone>
+    <android xmlns:android="http://schemas.android.com/apk/res/android"/>
+    <mobileweb>
+        <precache/>
+        <splash>
+            <enabled>true</enabled>
+            <inline-css-images>true</inline-css-images>
+        </splash>
+        <theme>default</theme>
+    </mobileweb>
+    <modules>
+        <module platform="commonjs" version="2.3.0">ti.cloud</module>
+    </modules>
+</ti:app>
