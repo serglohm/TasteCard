@@ -3,8 +3,11 @@ function MEngine(){
 	return this;
 }
 
+//http://www.weclever.ru/iphone_app/tastecardCousins
+//http://www.weclever.ru/iphone_app/tastecardActions
+
 MEngine.prototype.getUrlStart = function(){    
-	return "http://www.mymarykay.ru";
+	return "http://www.weclever.ru";
 };
 	
 MEngine.prototype.getData = function(uri, callback, errorcallback){    
