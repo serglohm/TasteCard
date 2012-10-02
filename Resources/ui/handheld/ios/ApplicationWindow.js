@@ -17,8 +17,10 @@ function ApplicationWindow(params) {
 		
 	//create master view container
 	var masterContainerWindow = Ti.UI.createWindow({
-		title:'Products'
+		//title:'Products'
 	});
+	masterContainerWindow.barColor = settings.backgroundColor;
+	masterContainerWindow.barImage = '/iphone/navBg.png';
 	masterContainerWindow.add(masterView);
 	
 
@@ -34,6 +36,8 @@ function ApplicationWindow(params) {
 		var tempWindow = Ti.UI.createWindow({
 			//title: e.data[1].act_name
 		});	
+		tempWindow.barColor = settings.backgroundColor;
+		tempWindow.barImage = '/iphone/navBg.png';
 		var tempContainerView = Ti.UI.createView({layout: "vertical"});
 		tempContainerView.add(tempView);
 		tempWindow.add(tempContainerView);
@@ -82,7 +86,7 @@ function ApplicationWindow(params) {
 	//----------------------------------------	
 	
 	var restarauntCount = mdb.getRestarauntsCount();
-	if(1 || restarauntCount == 0){
+	if(restarauntCount == 0){
 		engine.getCousins(function(data){											
 												
 												mdb.saveCousins(data);

@@ -8,6 +8,18 @@ function DetailView(_params) {
 	var mdb = _params.mdb;
 	var itemID = _params.itemID;
 	var itemData = {};
+	
+	var options_imgs = {
+		"50sale": "/iphone/options50.png",
+        "2eq1": "/iphone/options21.png",
+		"2persons": "/iphone/optionsx2.png",
+      	"4persons": "/iphone/optionsx4.png",
+        "6persons": "/iphone/optionsx6.png",
+        "8persons": "/iphone/optionsx8.png",
+      	"xfriday": "/iphone/optionsxpt.png",
+      	"phone": "/iphone/optionsphone.png"
+	};
+	
 
     var scrollView = Ti.UI.createScrollView({
       left: 0, top: 0, right: 0, bottom: 0,
@@ -21,7 +33,7 @@ function DetailView(_params) {
     self.add(scrollView);
     
     var view = Ti.UI.createView({
-      left: '5dp', top: '0dp', right: '5dp', bottom: '0dp',
+      left: '5dp', top: '5dp', right: '5dp', bottom: '5dp',
       height: Ti.UI.SIZE,
       width: 'auto',
       layout: 'vertical'
@@ -54,7 +66,7 @@ function DetailView(_params) {
 	var addressLabel = Ti.UI.createLabel({
 		text: '',	
 		textAlign: 'center',
-		top: '10dp', left: '10dp', right: '10dp',
+		top: '3dp', left: '10dp', right: '10dp',
 		font: {fontSize: '15dp', fontWeight: 'bold', fontFamily: 'Arial'},
 		color: '#fff'		
 	});
@@ -71,7 +83,15 @@ function DetailView(_params) {
 	});
 	phoneLabel.shadowColor = '#333';
 	phoneLabel.shadowOffset = {x: 0, y: -1};
-	view.add(phoneLabel);
+	view.add(phoneLabel);	
+
+	var optionsView = Ti.UI.createView({
+      center: {x: '160dp', y: '20dp'},
+      height: Ti.UI.SIZE,
+      width: Ti.UI.SIZE,
+      layout: 'horizontal'
+    });
+    view.add(optionsView);
 	
 	var annotaionLabel = Ti.UI.createLabel({	
 		font: {fontSize: '14dp', fontFamily: 'Arial'},
@@ -121,8 +141,16 @@ function DetailView(_params) {
 	
 	titleLabel.text = itemData.name;
 	addressLabel.text = itemData.adress;
-	phoneLabel.text = itemData.telefon;	
+	phoneLabel.text = itemData.telefon;
+	//optionsLabel.text = itemData.options;
 	
+	var options =  itemData.options.split(",");	
+	for(var i = 0; i < options.length; i++){
+		var opt_img = Ti.UI.createImageView({image: options_imgs[options[i]], width: '45', height: '27', 'left': '2', 'right': '2'});
+		Ti.API.log(options[i] + " " + options_imgs[options[i]]);
+		optionsView.add(opt_img);
+	}
+		
 	for(var i = 0; i < itemData.imgs.length; i++){
 		var iv1 = Ti.UI.createImageView({hires: true, image: itemData.imgs[i], width: 320, height: 172});
 		scrollImageView.addView(iv1);
