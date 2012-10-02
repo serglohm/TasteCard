@@ -2,6 +2,9 @@ function MSettings(){
 	this.dbName = 'TasteCardDb';
 	this.backgroundColor = '#66D22C';
 	this.mainWindowTitle = 'MyMaryKay';
+	this.itemSmallDefImage = '/iphone/def71.png';
+	this.itemBigDefImage = '/iphone/def325.png';
+	this.masterBackgroundImage = '/iphone/listBg.png';
 	this.masterBackgroundImage = '/iphone/listBg.png';
 	this.itemBackgroundImage = '/iphone/listBg.png';
 	this.itemsBackgroundImage = '/iphone/listBg.png';

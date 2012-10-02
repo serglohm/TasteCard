@@ -80,7 +80,7 @@ function MasterView(params) {
 			image: _rowdata.preview_image
 		});
 		img.hires = true;
-		//img.defaultImage = '/iphone/applelogo.png';
+		img.defaultImage = settings.itemSmallDefImage;
 		imageBgView.add(img);
 		bckView.add(imageBgView);
 		

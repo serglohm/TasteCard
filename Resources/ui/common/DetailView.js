@@ -46,7 +46,7 @@ function DetailView(_params) {
 		text: '',	
 		textAlign: 'center',
 		top: '10dp', left: '10dp', right: '10dp',
-		font: {fontSize: '15dp', fontWeight: 'bold', fontFamily: 'Arial'},
+		font: {fontSize: '17dp', fontWeight: 'bold', fontFamily: 'Arial'},
 		color: '#fff'		
 	});
 	titleLabel.shadowColor = '#333';
@@ -78,7 +78,7 @@ function DetailView(_params) {
 		text: '',	
 		textAlign: 'center',
 		top: '5dp', left: '10dp', right: '10dp',
-		font: {fontSize: '15dp', fontWeight: 'bold', fontFamily: 'Arial'},
+		font: {fontSize: '18dp', fontWeight: 'bold', fontFamily: 'Arial'},
 		color: '#fff'		
 	});
 	phoneLabel.shadowColor = '#333';
@@ -134,7 +134,7 @@ function DetailView(_params) {
 		else if($1 == "li"){if(f == 1){r = '\n ∙ ';} else if(f == 2){r = '\n  - ';}}
 		else if($1.indexOf("/h") == 0){r = '\n';}
 		else if($1.indexOf("h") == 0){r = '\n';}
-		else if($1.indexOf("/p") == 0){r = '';}	
+		else if($1.indexOf("/p") == 0){r = '\n';}	
 		return r;
 	});
 	annotaionLabel.text = newstring;
@@ -152,7 +152,7 @@ function DetailView(_params) {
 	}
 		
 	for(var i = 0; i < itemData.imgs.length; i++){
-		var iv1 = Ti.UI.createImageView({hires: true, image: itemData.imgs[i], width: 320, height: 172});
+		var iv1 = Ti.UI.createImageView({defaultImage: settings.itemBigDefImage, hires: true, image: itemData.imgs[i], width: 320, height: 172});
 		scrollImageView.addView(iv1);
 	}
 	actInd.hide();

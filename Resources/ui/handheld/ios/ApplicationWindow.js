@@ -1,17 +1,17 @@
 function ApplicationWindow(params) {
 
-
-	var MasterView = require('ui/common/MasterView'),
-		DetailView = require('ui/common/DetailView');
+	var MasterView = require('ui/common/MasterView');
+	var DetailView = require('ui/common/DetailView');
 		
 	var mdb = params.mdb;
 	var engine = params.engine;
 	var settings = params.settings;
 
+	
 	var self = Ti.UI.createWindow({
 		backgroundColor:'#ffffff'
 	});
-		
+	
 	//construct UI
 	var masterView = new MasterView(params);
 		
@@ -98,7 +98,7 @@ function ApplicationWindow(params) {
 	} else {
 		Titanium.App.fireEvent('app:showAlert', {data: "Got " + restarauntCount + " Restaraunts"});	
 	}
-		
+	
 	return self;
 };
 
