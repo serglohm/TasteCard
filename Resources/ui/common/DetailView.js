@@ -63,7 +63,7 @@ function DetailView(_params) {
 	});
 	view.add(scrollImageView);	
 	
-	var addressLabel = Ti.UI.createLabel({
+	var addressLabel = Ti.UI.createButton({
 		text: '',	
 		textAlign: 'center',
 		top: '3dp', left: '10dp', right: '10dp',
@@ -72,7 +72,11 @@ function DetailView(_params) {
 	});
 	addressLabel.shadowColor = '#333';
 	addressLabel.shadowOffset = {x: 0, y: -1};
+	addressLabel.addEventListener('click', function(e){
+			Ti.App.fireEvent('app:showMap', {data: itemData});
+		});
 	view.add(addressLabel);	
+	
 	
 	var phoneLabel = Ti.UI.createLabel({
 		text: '',	

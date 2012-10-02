@@ -2,6 +2,7 @@ function ApplicationWindow(params) {
 
 	var MasterView = require('ui/common/MasterView');
 	var DetailView = require('ui/common/DetailView');
+	var ActionMapView = require('ui/common/ActionMapView');
 		
 	var mdb = params.mdb;
 	var engine = params.engine;
@@ -45,7 +46,20 @@ function ApplicationWindow(params) {
 		navGroup.open(tempWindow);
 	});
 	
-	
+	Ti.App.addEventListener('app:showMap', function(e) {	
+		var tempView = new ActionMapView({engine: engine, mdb: mdb, item: e.data, settings: settings});			
+		var tempWindow = Ti.UI.createWindow({
+			//title: e.data[1].act_name
+		});	
+		tempWindow.barColor = settings.backgroundColor;
+		tempWindow.barImage = '/iphone/navBg.png';
+		var tempContainerView = Ti.UI.createView({layout: "vertical"});
+		tempContainerView.add(tempView);
+		tempWindow.add(tempContainerView);
+
+		navGroup.open(tempWindow);
+	});
+		
 	//---------------------------------------------------------------
 	
 	var alertWin = Titanium.UI.createWindow({
