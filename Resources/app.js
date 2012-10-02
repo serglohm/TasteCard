@@ -27,6 +27,16 @@ if (Ti.version < 1.8 ) {
 	//yourself what you consider a tablet form factor for android
 	var isTablet = osname === 'ipad' || (osname === 'android' && (width > 899 || height > 899));
 	
+	var MEngine = require('services/MEngine');
+	var MDb = require('services/MDb');
+	var MSettings = require('services/MSettings');
+	
+	var gParams = {};
+	gParams.settings = new MSettings();
+	gParams.engine = new MEngine();	
+	gParams.mdb = new MDb({settings: gParams.settings});
+	
+	
 	var Window;
 	if (isTablet) {
 		Window = require('ui/tablet/ApplicationWindow');
@@ -44,5 +54,5 @@ if (Ti.version < 1.8 ) {
 			Window = require('ui/handheld/android/ApplicationWindow');
 		}
 	}
-	new Window().open();
+	new Window(gParams).open();
 })();

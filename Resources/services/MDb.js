@@ -2,7 +2,7 @@ function MDb(_params){
 	this.dbName = _params.settings.dbName;
 	var db = Ti.Database.open(this.dbName);
 	
-	var DB_VERSION = 1.00;
+	var DB_VERSION = 1.01;
 	
 	db.execute('BEGIN');
 	
@@ -33,7 +33,7 @@ function MDb(_params){
 	}
 	
 	
-    db.execute("CREATE TABLE IF NOT EXISTS restaraunts (id INTEGER PRIMARY , \
+    db.execute("CREATE TABLE IF NOT EXISTS restaraunts (id INTEGER PRIMARY KEY, \
                                                                     name TEXT, \
 																	description TEXT, \
 																	conditions TEXT, \
@@ -45,21 +45,14 @@ function MDb(_params){
 																	options TEXT, \
 																	date_sell_start NUMERIC, \
 																	date_sell_end NUMERIC, \
+																	cousins_text TEXT, \
 																	taste_preview_image TEXT \
 																	)");
                                                                     
     db.execute("CREATE TABLE IF NOT EXISTS restaraunts_imgs (id INTEGER, url TEXT)");
-   
     db.execute("CREATE TABLE IF NOT EXISTS restaraunts_cousins (id INTEGER, cid TEXT)");     
-    db.execute("CREATE TABLE IF NOT EXISTS cousins (id INTEGER, name TEXT)");    
-                                                                            
-                                                                            
-                                                                            
-    db.execute("CREATE TABLE IF NOT EXISTS favourite_items (id INTEGER PRIMARY KEY AUTOINCREMENT, \
-                                                                            rid INTEGER)");
-    
-    
-                                                                            
+    db.execute("CREATE TABLE IF NOT EXISTS cousins (id INTEGER PRIMARY KEY, name TEXT)");                                                                      
+    db.execute("CREATE TABLE IF NOT EXISTS favourite_items (id INTEGER PRIMARY KEY AUTOINCREMENT, rid INTEGER)");                                                                        
 	
 	db.execute('COMMIT');
 	db.close();
@@ -73,36 +66,103 @@ function MDb(_params){
 MDb.prototype.open = function(itemId) {
 	this.db = Ti.Database.open(this.dbName);
 };
-
-MDb.prototype.addItemToFavourites = function(itemId, name, thumb) {
+MDb.prototype.saveCousins = function(data) {
 	this.open();
-    var query = this.db.execute("SELECT id FROM favourite_items where iid = ?", [itemId]);
-    if (query.rowCount == 0){      
-        this.db.execute("INSERT INTO favourite_items (iid) VALUES (?)", [itemId]);
-    }
-    query.close();
-    var gquery = this.db.execute("SELECT cname FROM goods where iid = ?", [itemId]);
-    if (gquery.rowCount == 0){
-        this.db.execute("INSERT INTO goods (iid, cname, thumb) VALUES (?, ?, ?)", [itemId, name, thumb]);
-    }
-    gquery.close();
+	this.db.execute("DELETE FROM cousins");
 
+	for(var i = 0; i < data.length; i++){
+		var item = data[i];
+		this.db.execute("INSERT INTO cousins (id, name) VALUES (?, ?)", [
+			item['id'],
+			item['name']
+		]);
+		var cid = this.db.getLastInsertRowId();	
+	}
 	this.db.close();
 };
 
+MDb.prototype.saveRestaraunts = function(data) {
+	this.open();
+	this.db.execute("DELETE FROM restaraunts");
+	this.db.execute("DELETE FROM restaraunts_imgs");
+	this.db.execute("DELETE FROM restaraunts_cousins");
+	
+	for(var i = 0; i < data.length; i++){
+		try{
+			var item = data[i];
+			
+			var plat = 0; 
+			var plong = 0;
+			var options = item['options'].join(",");
+			
+			if(item['coord'] != ""){
+				var coord = item['coord'].split(',');
+				plat = coord[1];
+				plong = coord[0];
+			}	
+			
+			var params = [
+					item['id'], 
+					item['name'], 
+					item['description'], 
+					item['conditions'], 
+					item['url'], 
+					item['adress'], 
+					plat, 
+					plong, 
+					item['telefon'], 
+					options, 
+					item['date_sell_start'], 
+					item['date_sell_end'], 
+					item['taste_preview_image']
+			];
+			
+			this.db.execute("INSERT INTO restaraunts (id, name, description, conditions, url, adress, plat, plong, telefon, options, date_sell_start, date_sell_end, taste_preview_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
+			var rid = this.db.getLastInsertRowId();
+						
+			for(var j = 0; j < item['taste_images'].length; j++){
+				this.db.execute("INSERT INTO restaraunts_imgs (id, url) VALUES (?, ?)", [rid, item['taste_images'][j]]);			
+			}
+			
+			var cousins_text = ""; 
+			for(var j = 0; j < item['cousins'].length; j++){
+				this.db.execute("INSERT INTO restaraunts_cousins (id, cid) VALUES (?, ?)", [
+					rid, item['cousins'][j]
+				]);
+				
+				var cousine_query = this.db.execute("SELECT name FROM cousins WHERE id=?", [item['cousins'][j]]);
+			    if (cousine_query.rowCount > 0){      
+			    	cousins_text += cousins_text == "" ? "": ", ";
+			    	cousins_text += cousine_query.fieldByName("name");		
+			    }
+			    cousine_query.close();
+			}	
+			this.db.execute("UPDATE restaraunts SET cousins_text=? WHERE id=?", [cousins_text, rid]);			
+			
+	
+		} catch(e){
+			Ti.API.log('DB INSERT ERROR: ' + JSON.stringify(e));
+		}
+	}
+	this.db.close();
+};
 
-MDb.prototype.getRestaraunt = function(oid) {
+MDb.prototype.getRestaraunts = function(oid) {
     this.open();
 	var model = [];
-    var rows = this.db.execute("SELECT i.oid as oid, i.iid as iid, i.cnt as cnt, g.thumb as thumb, g.cname as cname FROM order_items i, goods g where g.iid=i.iid AND i.oid=?", [oid]);
+    var rows = this.db.execute("SELECT id, name, telefon, taste_preview_image, adress, plat, plong, cousins_text FROM restaraunts");
 
 	while (rows.isValidRow()){
 		var rowData = {};
-        rowData.cname = rows.fieldByName('cname');
-        rowData.thumb = rows.fieldByName('thumb');
-        rowData.oid = rows.fieldByName('oid');
-        rowData.iid = rows.fieldByName('iid');
-        rowData.cnt = rows.fieldByName('cnt');		
+        rowData.id = rows.fieldByName('id');
+        rowData.name = rows.fieldByName('name');
+        rowData.adress = rows.fieldByName('adress');
+        rowData.telefon = rows.fieldByName('telefon');
+        rowData.taste_preview_image = rows.fieldByName('taste_preview_image');
+        rowData.plat = rows.fieldByName('plat');	
+        rowData.plong = rows.fieldByName('plong');
+        rowData.cousins_text = rows.fieldByName('cousins_text');
+        		
 		
         model.push(rowData);
         rows.next();
@@ -112,5 +172,68 @@ MDb.prototype.getRestaraunt = function(oid) {
     this.db.close();
     return model;
 };
+
+MDb.prototype.getRestaraunt = function(id) {
+    this.open();
+	var model = [];
+    var rows = this.db.execute("SELECT  id, name, telefon, taste_preview_image, adress, plat, plong, conditions, description, options, cousins_text FROM restaraunts WHERE id=?", [id]);
+
+	while (rows.isValidRow()){
+		var rowData = {};
+        rowData.id = rows.fieldByName('id');
+        rowData.name = rows.fieldByName('name');
+        rowData.adress = rows.fieldByName('adress');
+        rowData.telefon = rows.fieldByName('telefon');
+        rowData.taste_preview_image = rows.fieldByName('taste_preview_image');
+        rowData.plat = rows.fieldByName('plat');	
+        rowData.plong = rows.fieldByName('plong');
+        rowData.cousins_text = rows.fieldByName('cousins_text');
+        rowData.description = rows.fieldByName('description');
+        rowData.conditions = rows.fieldByName('conditions');
+        rowData.options = rows.fieldByName('options');
+        
+        
+		
+        
+        var restaraunts_imgs = [];
+        var imgsRows = this.db.execute("SELECT url FROM restaraunts_imgs WHERE id=?", [id]);
+		while (imgsRows.isValidRow()){
+			var url = imgsRows.fieldByName('url');
+			if(url.indexOf("71x71") < 0){
+        		restaraunts_imgs.push(url);
+        	}
+        	imgsRows.next();
+        }
+        imgsRows.close();
+        rowData.imgs = restaraunts_imgs;
+        
+        model.push(rowData);
+        rows.next();
+    }
+	rows.close();
+
+    this.db.close();
+    return model;
+};
+
+MDb.prototype.getOneFieldSql = function(sql, fieldName) {
+    
+    this.open();
+	var result = 0;
+	var query = this.db.execute(sql);
+    if (query.rowCount == 0){      
+        result = 0;
+    } else {
+    	result = query.fieldByName(fieldName);		
+    }
+    query.close();
+    this.db.close();
+    return result;
+};
+
+MDb.prototype.getRestarauntsCount = function() {
+    return this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
+};
+
 
 module.exports = MDb; 

@@ -62,10 +62,21 @@ MEngine.prototype.postRawData = function(uri, params, callback, errorcallback){
     xhr.send(params);
 };
 
-
 MEngine.prototype.postData = function(uri, params, callback, errorcallback){        
     this.postRawData(uri, JSON.stringify(params), callback, errorcallback);
 };
+
+MEngine.prototype.getRestaraunts = function(callback){        
+    var uri = '/iphone_app/tastecardActions';
+    this.getData(uri, callback);
+};
+
+
+MEngine.prototype.getCousins = function(callback){        
+    var uri = '/iphone_app/tastecardCousins';
+    this.getData(uri, callback);
+};
+
 
 module.exports = MEngine; 
  
