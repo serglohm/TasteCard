@@ -14,14 +14,13 @@ function ActionMapView(_params){
  		pincolor: Ti.Map.ANNOTATION_RED, 
  		animate: true, 
  		//leftButton: '/iphone/favBtn.png', 
-		image: '/iphone/mapPin.png',
+		image: '/iphone/mappin.png',
 		//rightButton: '/iphone/favBtn.png',
  		myid: 1	
  	});
  	annotation_arr.push(tempAnnotation);
 	
 	var mapview = Ti.Map.createView({ 
-		top: 50,
 		mapType: Ti.Map.STANDARD_TYPE, 
 		region: {
 	 		latitude: item.plat, 
@@ -37,16 +36,19 @@ function ActionMapView(_params){
 	self.add(mapview); 
 	
 	var minusButton = Ti.UI.createButton({
-		left: 10, top: 10, title: '-'
+		left: 10, top: 10
 	});
+	minusButton.image = '/iphone/minus.png';
 	minusButton.addEventListener('click', function(e){
 		mapview.zoom(-1);
 	});
 	self.add(minusButton);
 	
 	var plusButton = Ti.UI.createButton({
-		right: 10, top: 10, title: '+'
+		right: 10, top: 10
 	});
+	
+	plusButton.image = '/iphone/plus.png';
 	plusButton.addEventListener('click', function(e){
 		mapview.zoom(1);
 	});
