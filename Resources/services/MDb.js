@@ -57,6 +57,7 @@ function MDb(_params){
 	db.execute('COMMIT');
 	db.close();
 	
+	this.cached = {'restaraunts': []};
 	
 	this.db = db;
 	
@@ -173,6 +174,30 @@ MDb.prototype.getRestaraunts = function(oid) {
     return model;
 };
 
+MDb.prototype.getDistance = function(lat1, lon1, lat2, lon2) {
+
+	var R = 6371; // km
+	var dLat = (lat2-lat1).toRad();
+	var dLon = (lon2-lon1).toRad();
+	var lat1 = lat1.toRad();
+	var lat2 = lat2.toRad();
+	
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+	        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	var d = R * c;
+	return d;
+}
+
+MDb.prototype.updateCachedDistance = function(lat, lon) {
+
+	
+	for(var i = 0; i < this.cached.restaraunts.length; i++){
+		
+	}
+	
+}
+
 MDb.prototype.getRestaraunt = function(id) {
     this.open();
 	var model = [];
@@ -191,9 +216,6 @@ MDb.prototype.getRestaraunt = function(id) {
         rowData.description = rows.fieldByName('description');
         rowData.conditions = rows.fieldByName('conditions');
         rowData.options = rows.fieldByName('options');
-        
-        
-		
         
         var restaraunts_imgs = [];
         var imgsRows = this.db.execute("SELECT url FROM restaraunts_imgs WHERE id=?", [id]);

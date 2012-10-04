@@ -36,19 +36,19 @@ function ActionMapView(_params){
 	self.add(mapview); 
 	
 	var minusButton = Ti.UI.createButton({
-		left: 10, top: 10
+		left: 10, top: 10, height: 57, width: 57
 	});
-	minusButton.image = '/iphone/minus.png';
+	minusButton.backgroundImage = '/iphone/minus.png';
 	minusButton.addEventListener('click', function(e){
 		mapview.zoom(-1);
 	});
 	self.add(minusButton);
 	
 	var plusButton = Ti.UI.createButton({
-		right: 10, top: 10
+		right: 10, top: 10, height: 57, width: 57
 	});
 	
-	plusButton.image = '/iphone/plus.png';
+	plusButton.backgroundImage = '/iphone/plus.png';
 	plusButton.addEventListener('click', function(e){
 		mapview.zoom(1);
 	});

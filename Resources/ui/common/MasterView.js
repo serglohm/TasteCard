@@ -56,8 +56,7 @@ function MasterView(params) {
 			itemID: _rowdata.id,			
 			left: '5dp', right: '5dp',
 			font: {fontSize: '12dp', fontFamily: 'Arial'},
-			color: fontColor,
-			shadowColor: shadowColor, shadowOffset: shadowOffset
+			color: fontColor //, shadowColor: shadowColor, shadowOffset: shadowOffset
 		});
 		labelPanel.add(addressLabel);
 		var cousinsTextLabel = Ti.UI.createLabel({
@@ -65,8 +64,7 @@ function MasterView(params) {
 			itemID: _rowdata.id,			
 			left: '5dp', right: '5dp',
 			font: {fontSize: '10dp', fontFamily: 'Arial'},
-			color: fontColor,
-			shadowColor: shadowColor, shadowOffset: shadowOffset
+			color: fontColor //, shadowColor: shadowColor, shadowOffset: shadowOffset
 		});
 		labelPanel.add(cousinsTextLabel);	
 				
