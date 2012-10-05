@@ -57,7 +57,7 @@ function MDb(_params){
 	db.execute('COMMIT');
 	db.close();
 	
-	this.cached = {'restaraunts': []};
+	this.cached = {'restaraunts': {}};
 	
 	this.db = db;
 	
@@ -148,7 +148,14 @@ MDb.prototype.saveRestaraunts = function(data) {
 	this.db.close();
 };
 
-MDb.prototype.getRestaraunts = function(oid) {
+MDb.prototype.getCousins = function(oid) {
+	return this.getSql("SELECT id, name FROM cousins", ['id', 'name']);
+};
+
+
+
+
+MDb.prototype.getRestaraunts = function() {
     this.open();
 	var model = [];
     var rows = this.db.execute("SELECT id, name, telefon, taste_preview_image, adress, plat, plong, cousins_text FROM restaraunts");
@@ -163,7 +170,8 @@ MDb.prototype.getRestaraunts = function(oid) {
         rowData.plat = rows.fieldByName('plat');	
         rowData.plong = rows.fieldByName('plong');
         rowData.cousins_text = rows.fieldByName('cousins_text');
-        		
+        
+        this.cached.restaraunts[rowData.id] = {'plat': rowData.plat, 'plong': rowData.plong, 'distance': 0};                       		
 		
         model.push(rowData);
         rows.next();
@@ -173,6 +181,10 @@ MDb.prototype.getRestaraunts = function(oid) {
     this.db.close();
     return model;
 };
+
+Number.prototype.toRad = function() {
+    return this * Math.PI / 180;
+}
 
 MDb.prototype.getDistance = function(lat1, lon1, lat2, lon2) {
 
@@ -190,12 +202,21 @@ MDb.prototype.getDistance = function(lat1, lon1, lat2, lon2) {
 }
 
 MDb.prototype.updateCachedDistance = function(lat, lon) {
-
-	
-	for(var i = 0; i < this.cached.restaraunts.length; i++){
-		
+	Ti.API.info('updateCachedDistance: ' + JSON.stringify(this.cached));
+	try{
+	for(var i in this.cached['restaraunts']){
+		var restaraunt = this.cached['restaraunts'][i];
+		var d = this.getDistance(lat, lon, restaraunt.plat, restaraunt.plong);
+		this.cached.restaraunts[i].distance = d;
+		Ti.API.info("restaraunts" + i + " " + this.cached.restaraunts[i].distance);
 	}
-	
+	} catch(e){
+		Ti.API.info("error: " + e);
+	}
+}
+
+MDb.prototype.getCachedRestaraunt = function(id) {
+	return this.cached.restaraunts[id]; 
 }
 
 MDb.prototype.getRestaraunt = function(id) {
@@ -216,6 +237,8 @@ MDb.prototype.getRestaraunt = function(id) {
         rowData.description = rows.fieldByName('description');
         rowData.conditions = rows.fieldByName('conditions');
         rowData.options = rows.fieldByName('options');
+        
+
         
         var restaraunts_imgs = [];
         var imgsRows = this.db.execute("SELECT url FROM restaraunts_imgs WHERE id=?", [id]);
@@ -238,11 +261,38 @@ MDb.prototype.getRestaraunt = function(id) {
     return model;
 };
 
-MDb.prototype.getOneFieldSql = function(sql, fieldName) {
+
+MDb.prototype.getRestarauntsCount = function() {
+    return this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
+};
+
+
+//----------------------------------------------------------------
+
+MDb.prototype.getSql = function(sql, fields, params) {
+    this.open();
+	var model = [];
+    var rows = this.db.execute(sql, params);
+
+	while (rows.isValidRow()){
+		var rowData = {};
+		for(var i = 0; i < fields.length; i++){
+			rowData[fields[i]] = rows.fieldByName(fields[i]);	
+		}
+         model.push(rowData);
+        rows.next();
+    }
+	rows.close();
+
+    this.db.close();
+    return model;
+};
+
+MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
     
     this.open();
 	var result = 0;
-	var query = this.db.execute(sql);
+	var query = this.db.execute(sql, params);
     if (query.rowCount == 0){      
         result = 0;
     } else {
@@ -252,10 +302,5 @@ MDb.prototype.getOneFieldSql = function(sql, fieldName) {
     this.db.close();
     return result;
 };
-
-MDb.prototype.getRestarauntsCount = function() {
-    return this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
-};
-
 
 module.exports = MDb; 

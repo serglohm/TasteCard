@@ -66,7 +66,16 @@ function MasterView(params) {
 			font: {fontSize: '10dp', fontFamily: 'Arial'},
 			color: fontColor //, shadowColor: shadowColor, shadowOffset: shadowOffset
 		});
-		labelPanel.add(cousinsTextLabel);	
+		labelPanel.add(cousinsTextLabel);
+		var distanceLabel = Ti.UI.createLabel({
+			text: '',
+			itemID: _rowdata.id,			
+			left: '5dp', right: '5dp',
+			font: {fontSize: '10dp', fontFamily: 'Arial'},
+			color: fontColor //, shadowColor: shadowColor, shadowOffset: shadowOffset
+		});
+		labelPanel.add(distanceLabel);	
+		newRow.distanceLabel = distanceLabel;
 				
 		var imageBgView = Ti.UI.createView({
 			left: '5dp', top: '20dp', bottom: '5dp',			
@@ -114,6 +123,53 @@ function MasterView(params) {
 		Ti.App.fireEvent('app:itemSelected', {data: e.source.itemID});
 		
 	});
+	
+	self.updateTable = function(){
+		for(var i = 0; i < table.data[0].rows.length; i++){
+			//table.data.rows[0].children[z].text = &quot;hello!&quot;
+			Ti.API.log("updateTable: " + i + " " + table.data[0].rows[i].itemID);
+			var id = table.data[0].rows[i].itemID;
+			var distance = mdb.getCachedRestaraunt(id).distance.toFixed(2)
+			table.data[0].rows[i].distanceLabel.text = distance + ' км.';
+			table.data[0].rows[i].distance = distance;
+		}
+		
+		var data = table.data[0].rows;
+		data.sort( function( row1, row2 ) {
+  			return row1.distance - row2.distance;
+		});
+		table.setData( data );		
+		
+	};
+	
+	
+	Titanium.Geolocation.accuracy = Titanium.Geolocation.ACCURACY_BEST;	
+	Titanium.Geolocation.distanceFilter = 10;	
+	Titanium.Geolocation.getCurrentPosition(function(e){
+		if (!e.success || e.error){
+			Ti.API.info("Code translation: "+translateErrorCode(e.code));
+			return;
+		}
+
+		var longitude = e.coords.longitude;
+		var latitude = e.coords.latitude;
+		var altitude = e.coords.altitude;
+		var heading = e.coords.heading;
+		var accuracy = e.coords.accuracy;
+		var speed = e.coords.speed;
+		var timestamp = e.coords.timestamp;
+		var altitudeAccuracy = e.coords.altitudeAccuracy;
+		Ti.API.info('speed ' + speed);
+		
+		mdb.updateCachedDistance(latitude, longitude);
+		Titanium.API.info('mdb: ' + mdb);
+		self.updateTable();
+
+		Titanium.API.info('geo - current location: ' + new Date(timestamp) + ' long ' + longitude + ' lat ' + latitude + ' accuracy ' + accuracy);
+		
+		
+	
+	});	
 	
 	
 	
