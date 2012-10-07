@@ -2,7 +2,7 @@ function MDb(_params){
 	this.dbName = _params.settings.dbName;
 	var db = Ti.Database.open(this.dbName);
 	
-	var DB_VERSION = 1.01;
+	var DB_VERSION = 1.04;
 	
 	db.execute('BEGIN');
 	
@@ -50,8 +50,8 @@ function MDb(_params){
 																	)");
                                                                     
     db.execute("CREATE TABLE IF NOT EXISTS restaraunts_imgs (id INTEGER, url TEXT)");
-    db.execute("CREATE TABLE IF NOT EXISTS restaraunts_cousins (id INTEGER, cid TEXT)");     
-    db.execute("CREATE TABLE IF NOT EXISTS cousins (id INTEGER PRIMARY KEY, name TEXT)");                                                                      
+    db.execute("CREATE TABLE IF NOT EXISTS restaraunts_cousins (id INTEGER, cid INTEGER)");     
+    db.execute("CREATE TABLE IF NOT EXISTS cousins (id INTEGER PRIMARY KEY, name TEXT, items_count INTEGER)");                                                                      
     db.execute("CREATE TABLE IF NOT EXISTS favourite_items (id INTEGER PRIMARY KEY AUTOINCREMENT, rid INTEGER)");                                                                        
 	
 	db.execute('COMMIT');
@@ -73,7 +73,7 @@ MDb.prototype.saveCousins = function(data) {
 
 	for(var i = 0; i < data.length; i++){
 		var item = data[i];
-		this.db.execute("INSERT INTO cousins (id, name) VALUES (?, ?)", [
+		this.db.execute("INSERT INTO cousins (id, name, items_count) VALUES (?, ?, 0)", [
 			item['id'],
 			item['name']
 		]);
@@ -130,6 +130,7 @@ MDb.prototype.saveRestaraunts = function(data) {
 				this.db.execute("INSERT INTO restaraunts_cousins (id, cid) VALUES (?, ?)", [
 					rid, item['cousins'][j]
 				]);
+				this.db.execute("UPDATE cousins SET items_count=items_count+1 WHERE id=?", [item['cousins'][j]]);
 				
 				var cousine_query = this.db.execute("SELECT name FROM cousins WHERE id=?", [item['cousins'][j]]);
 			    if (cousine_query.rowCount > 0){      
@@ -148,12 +149,17 @@ MDb.prototype.saveRestaraunts = function(data) {
 	this.db.close();
 };
 
-MDb.prototype.getCousins = function(oid) {
-	return this.getSql("SELECT id, name FROM cousins", ['id', 'name']);
+MDb.prototype.getCousins = function() {
+	return this.getSql("SELECT id, name, items_count FROM cousins WHERE items_count>?", ['id', 'name', 'items_count'], [1]);
 };
 
-
-
+MDb.prototype.getCousinRestaraunts = function(cid) {
+	Ti.API.info("getCousinRestaraunts: " + cid);
+	var sql = "SELECT r.id, r.name, r.telefon, r.taste_preview_image, r.adress, r.plat, r.plong, r.cousins_text, c.cid FROM restaraunts r, restaraunts_cousins c WHERE c.id=r.id AND c.cid=?";
+	var fieldNames = ['id', 'name', 'adress', 'telefon', 'taste_preview_image', 'plat', 'plong', 'cousins_text', "cid"];
+	var params = [cid];
+	return this.getSql(sql, fieldNames, params);	
+};
 
 MDb.prototype.getRestaraunts = function() {
     this.open();
@@ -202,14 +208,12 @@ MDb.prototype.getDistance = function(lat1, lon1, lat2, lon2) {
 }
 
 MDb.prototype.updateCachedDistance = function(lat, lon) {
-	Ti.API.info('updateCachedDistance: ' + JSON.stringify(this.cached));
 	try{
-	for(var i in this.cached['restaraunts']){
-		var restaraunt = this.cached['restaraunts'][i];
-		var d = this.getDistance(lat, lon, restaraunt.plat, restaraunt.plong);
-		this.cached.restaraunts[i].distance = d;
-		Ti.API.info("restaraunts" + i + " " + this.cached.restaraunts[i].distance);
-	}
+		for(var i in this.cached['restaraunts']){
+			var restaraunt = this.cached['restaraunts'][i];
+			var d = this.getDistance(lat, lon, restaraunt.plat, restaraunt.plong);
+			this.cached.restaraunts[i].distance = d;
+		}
 	} catch(e){
 		Ti.API.info("error: " + e);
 	}
@@ -237,8 +241,6 @@ MDb.prototype.getRestaraunt = function(id) {
         rowData.description = rows.fieldByName('description');
         rowData.conditions = rows.fieldByName('conditions');
         rowData.options = rows.fieldByName('options');
-        
-
         
         var restaraunts_imgs = [];
         var imgsRows = this.db.execute("SELECT url FROM restaraunts_imgs WHERE id=?", [id]);
@@ -272,14 +274,22 @@ MDb.prototype.getRestarauntsCount = function() {
 MDb.prototype.getSql = function(sql, fields, params) {
     this.open();
 	var model = [];
-    var rows = this.db.execute(sql, params);
-
+    var rows;
+    if(params){
+    	rows = this.db.execute(sql, params);
+    	Ti.API.info("execute(" + sql + ", " + params);
+    } else {
+    	rows = this.db.execute(sql);
+    }
+    Ti.API.info('fields: ' + fields);
 	while (rows.isValidRow()){
 		var rowData = {};
+		
 		for(var i = 0; i < fields.length; i++){
 			rowData[fields[i]] = rows.fieldByName(fields[i]);	
 		}
-         model.push(rowData);
+		Ti.API.info(rowData);
+        model.push(rowData);
         rows.next();
     }
 	rows.close();
@@ -292,7 +302,12 @@ MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
     
     this.open();
 	var result = 0;
-	var query = this.db.execute(sql, params);
+	var query;
+	if(params){
+		query = this.db.execute(sql, params);
+	} else {
+		query = this.db.execute(sql);
+	}
     if (query.rowCount == 0){      
         result = 0;
     } else {

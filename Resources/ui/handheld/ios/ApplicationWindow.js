@@ -2,6 +2,7 @@ function ApplicationWindow(params) {
 
 	var MasterView = require('ui/common/MasterView');
 	var DetailView = require('ui/common/DetailView');
+	var CousineView = require('ui/common/CousineView');
 	var ActionMapView = require('ui/common/ActionMapView');
 		
 	var mdb = params.mdb;
@@ -23,7 +24,36 @@ function ApplicationWindow(params) {
 	masterContainerWindow.barColor = settings.backgroundColor;
 	masterContainerWindow.barImage = '/iphone/navBg.png';
 	masterContainerWindow.add(masterView);
+	var mapButton = Titanium.UI.createButton({title:'Карта'});
+	mapButton.addEventListener('click', function(e){		
+		var itemsData = masterView.tableDataFunc();
+		Ti.API.info('mapButton: ' + itemsData);
+		Ti.App.fireEvent('app:showMap', {data: itemsData});
+	});
+	masterContainerWindow.rightNavButton = mapButton;
 	
+	Ti.App.addEventListener('app:selectCousine', function(e){
+		var tempView = new CousineView({engine: engine, mdb: mdb, settings: settings});			
+		var tempWindow = Ti.UI.createWindow({
+			//title: e.data[1].act_name
+		});	
+		tempWindow.barColor = settings.backgroundColor;
+		tempWindow.barImage = '/iphone/navBg.png';
+		var tempContainerView = Ti.UI.createView({layout: "vertical"});
+		tempContainerView.add(tempView);
+		tempWindow.add(tempContainerView);
+
+		navGroup.open(tempWindow);
+		tempWindow.addEventListener('close', function(e){
+			try{
+				var cousinRestaraunts = mdb.getCousinRestaraunts(settings.cousineId);
+				masterView.setTableData(cousinRestaraunts);	
+				masterView.updateDistance();
+			} catch(e){
+				Ti.API.info('ERROR: ' + e);
+			}
+		});
+	});
 
 	
 	//create iOS specific NavGroup UI
@@ -47,7 +77,7 @@ function ApplicationWindow(params) {
 	});
 	
 	Ti.App.addEventListener('app:showMap', function(e) {	
-		var tempView = new ActionMapView({engine: engine, mdb: mdb, item: e.data, settings: settings});			
+		var tempView = new ActionMapView({engine: engine, mdb: mdb, items: e.data, settings: settings});			
 		var tempWindow = Ti.UI.createWindow({
 			//title: e.data[1].act_name
 		});	

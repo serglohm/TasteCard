@@ -98,25 +98,51 @@ function MasterView(params) {
 	};		
 
 	self.clearTable = function(){
-		tableData = [];
+		self.tableData = [];
 		table.setData([]);		
 	};
-	
+
 	var table = Ti.UI.createTableView({
 		backgroundColor: 'transparent'
 	});
+	var headerView = Ti.UI.createView({
+		backgroundColor: "transparent",	height: '70dp'
+	});
+	var headerBgView = Ti.UI.createView({
+		left: '5dp', right: '5dp', top: '5dp', bottom: '0dp',
+		layout: 'vertical', borderRadius: '3dp', backgroundColor: '#000'
+	});
+	var filterButton = Ti.UI.createButton({
+		title: "Выбрать кухню"
+	});
+	
+	filterButton.addEventListener('click', function(e){
+		Ti.App.fireEvent('app:selectCousine', {data: 0});
+	});
+	headerBgView.add(filterButton);
+	
+	var headerLabel = Ti.UI.createLabel({
+		text: "Кухня: " + "", color: "#fff"
+	});
+	headerBgView.add(headerLabel);
+	headerView.add(headerBgView)
+	table.headerView = headerView;
 	table.separatorColor = 'transparent';
 	self.add(table);
 	
-	var tableData = mdb.getRestaraunts();
-	var tempData = [];
-	for(var i = 0; i < tableData.length; i++){
-		tableData[i].title = tableData[i].name;
-		tableData[i].preview_image = tableData[i].taste_preview_image;		
-
-		self.addRowToTable(tableData[i], tempData);
-	}
-	table.setData(tempData);
+	
+	
+	self.setTableData = function(newData){
+		var tempData = [];
+		for(var i = 0; i < newData.length; i++){
+			newData[i].title = newData[i].name;
+			newData[i].preview_image = newData[i].taste_preview_image;		
+			self.addRowToTable(newData[i], tempData);
+		}
+		table.setData(tempData);
+	};
+	self.tableData = mdb.getRestaraunts();
+	self.setTableData(self.tableData);
 	
 	table.addEventListener('click', function(e) {
 		Ti.API.log("click on Table");
@@ -124,7 +150,7 @@ function MasterView(params) {
 		
 	});
 	
-	self.updateTable = function(){
+	self.updateDistance = function(){
 		for(var i = 0; i < table.data[0].rows.length; i++){
 			//table.data.rows[0].children[z].text = &quot;hello!&quot;
 			Ti.API.log("updateTable: " + i + " " + table.data[0].rows[i].itemID);
@@ -140,6 +166,10 @@ function MasterView(params) {
 		});
 		table.setData( data );		
 		
+	};
+	
+	self.tableDataFunc = function(){		
+		return self.tableData;
 	};
 	
 	
@@ -163,12 +193,9 @@ function MasterView(params) {
 		
 		mdb.updateCachedDistance(latitude, longitude);
 		Titanium.API.info('mdb: ' + mdb);
-		self.updateTable();
+		self.updateDistance();
 
 		Titanium.API.info('geo - current location: ' + new Date(timestamp) + ' long ' + longitude + ' lat ' + latitude + ' accuracy ' + accuracy);
-		
-		
-	
 	});	
 	
 	

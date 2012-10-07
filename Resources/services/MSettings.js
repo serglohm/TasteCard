@@ -14,6 +14,8 @@ function MSettings(){
 	this.historyBackgroundImage = '/iphone/listBg.png';
 	this.historyItemBackgroundImage = '/iphone/listBg.png';
 	
+	this.cousineId = -1;
+	
 	return this;
 }
 

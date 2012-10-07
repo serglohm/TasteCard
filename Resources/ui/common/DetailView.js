@@ -66,14 +66,15 @@ function DetailView(_params) {
 	var addressLabel = Ti.UI.createButton({
 		text: '',	
 		textAlign: 'center',
-		top: '3dp', left: '10dp', right: '10dp',
+		top: '3dp', width: '300dp', height: '78dp',
 		font: {fontSize: '15dp', fontWeight: 'bold', fontFamily: 'Arial'},
-		color: '#fff'		
+		color: '#333',
+		backgroundImage: "/iphone/mapButton.png"		
 	});
 	addressLabel.shadowColor = '#333';
 	addressLabel.shadowOffset = {x: 0, y: -1};
 	addressLabel.addEventListener('click', function(e){
-			Ti.App.fireEvent('app:showMap', {data: itemData});
+			Ti.App.fireEvent('app:showMap', {data: [itemData]});
 		});
 	view.add(addressLabel);	
 	
@@ -144,7 +145,7 @@ function DetailView(_params) {
 	annotaionLabel.text = newstring;
 	
 	titleLabel.text = itemData.name;
-	addressLabel.text = itemData.adress;
+	addressLabel.title = itemData.adress;
 	phoneLabel.text = itemData.telefon;
 	//optionsLabel.text = itemData.options;
 	

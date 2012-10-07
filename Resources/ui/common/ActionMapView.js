@@ -2,24 +2,27 @@ function ActionMapView(_params){
 	var self = Ti.UI.createView({
 		
 	});
-	var item = _params.item;
+	var items = _params.items;
 
 	var annotation_arr = [];
 	
-	var tempAnnotation = Ti.Map.createAnnotation({ 
- 		latitude: item.plat, 
- 		longitude: item.plong, 
- 		title: item.name, 
- 		subtitle: item.adress, 
- 		pincolor: Ti.Map.ANNOTATION_RED, 
- 		animate: true, 
- 		//leftButton: '/iphone/favBtn.png', 
-		image: '/iphone/mappin.png',
-		//rightButton: '/iphone/favBtn.png',
- 		myid: 1	
- 	});
- 	annotation_arr.push(tempAnnotation);
 	
+	for(var i = 0; i < items.length; i++){
+		var item = items[i];
+		var tempAnnotation = Ti.Map.createAnnotation({ 
+	 		latitude: item.plat, 
+	 		longitude: item.plong, 
+	 		title: item.name, 
+	 		subtitle: item.adress, 
+	 		pincolor: Ti.Map.ANNOTATION_RED, 
+	 		animate: true, 
+	 		//leftButton: '/iphone/favBtn.png', 
+			image: '/iphone/mappin.png',
+			//rightButton: '/iphone/favBtn.png',
+	 		myid: 1	
+	 	});
+	 	annotation_arr.push(tempAnnotation);
+	}
 	var mapview = Ti.Map.createView({ 
 		mapType: Ti.Map.STANDARD_TYPE, 
 		region: {
