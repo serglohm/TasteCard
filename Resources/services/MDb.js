@@ -2,7 +2,8 @@ function MDb(_params){
 	this.dbName = _params.settings.dbName;
 	var db = Ti.Database.open(this.dbName);
 	
-	var DB_VERSION = 1.04;
+	var DB_VERSION = 1.030;
+	
 	
 	db.execute('BEGIN');
 	
@@ -16,7 +17,7 @@ function MDb(_params){
     } else {
     	var result = query.fieldByName('svalue');
     	Ti.API.log('current DBVersion = ' + result)
-    	if (parseFloat(result) < DB_VERSION){
+    	if (parseFloat(result) != DB_VERSION){
     		delete_flag = true;
     		db.execute("UPDATE app_settings SET svalue=? WHERE sname='DB_VERSION'", [DB_VERSION]);
     	}	
@@ -43,8 +44,9 @@ function MDb(_params){
 																	plong NUMERIC, \
 																	telefon TEXT, \
 																	options TEXT, \
-																	date_sell_start NUMERIC, \
-																	date_sell_end NUMERIC, \
+																	date_sell_start DATETIME, \
+																	date_sell_end DATETIME, \
+																	date_edit DATETIME, \
 																	cousins_text TEXT, \
 																	taste_preview_image TEXT \
 																	)");
@@ -58,6 +60,7 @@ function MDb(_params){
 	db.close();
 	
 	this.cached = {'restaraunts': {}};
+	this.editDate = 0;
 	
 	this.db = db;
 	
@@ -87,6 +90,7 @@ MDb.prototype.saveRestaraunts = function(data) {
 	this.db.execute("DELETE FROM restaraunts");
 	this.db.execute("DELETE FROM restaraunts_imgs");
 	this.db.execute("DELETE FROM restaraunts_cousins");
+	var editDate = new Date(this.editDate);
 	
 	for(var i = 0; i < data.length; i++){
 		try{
@@ -115,10 +119,29 @@ MDb.prototype.saveRestaraunts = function(data) {
 					options, 
 					item['date_sell_start'], 
 					item['date_sell_end'], 
+					item['date_edit'],
 					item['taste_preview_image']
 			];
 			
-			this.db.execute("INSERT INTO restaraunts (id, name, description, conditions, url, adress, plat, plong, telefon, options, date_sell_start, date_sell_end, taste_preview_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
+			var edit_date = new Date();
+			var myRe = /(\d+)\-(\d+)\-(\d+) (\d+)\:(\d+)\:(\d+)/ig;
+			var myArray = myRe.exec(item['date_edit']);
+			if(myArray.length){
+				var y = parseInt(myArray[1]) - 1900;
+				var m = myArray[2] - 1;
+				var d = myArray[3];
+				
+				var hour = myArray[4];
+				var minute = myArray[5];
+				var seconds = myArray[6];
+				var tempDate = new Date(y, m, d, hour, minute, seconds);	
+				if (editDate < tempDate){
+					editDate = tempDate;
+				}			
+			}
+			this.setCachedRestaraunt(item);
+			
+			this.db.execute("INSERT INTO restaraunts (id, name, description, conditions, url, adress, plat, plong, telefon, options, date_sell_start, date_sell_end, date_edit, taste_preview_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
 			var rid = this.db.getLastInsertRowId();
 						
 			for(var j = 0; j < item['taste_images'].length; j++){
@@ -147,6 +170,8 @@ MDb.prototype.saveRestaraunts = function(data) {
 		}
 	}
 	this.db.close();
+	
+	Ti.API.info("editDate: " + editDate);
 };
 
 MDb.prototype.getCousins = function() {
@@ -159,6 +184,10 @@ MDb.prototype.getCousinRestaraunts = function(cid) {
 	var fieldNames = ['id', 'name', 'adress', 'telefon', 'taste_preview_image', 'plat', 'plong', 'cousins_text', "cid"];
 	var params = [cid];
 	return this.getSql(sql, fieldNames, params);	
+};
+
+MDb.prototype.setCachedRestaraunt = function(rowData) {
+	this.cached.restaraunts[rowData.id] = {'plat': rowData.plat, 'plong': rowData.plong, 'distance': 0};
 };
 
 MDb.prototype.getRestaraunts = function() {
@@ -176,9 +205,7 @@ MDb.prototype.getRestaraunts = function() {
         rowData.plat = rows.fieldByName('plat');	
         rowData.plong = rows.fieldByName('plong');
         rowData.cousins_text = rows.fieldByName('cousins_text');
-        
-        this.cached.restaraunts[rowData.id] = {'plat': rowData.plat, 'plong': rowData.plong, 'distance': 0};                       		
-		
+
         model.push(rowData);
         rows.next();
     }
@@ -268,6 +295,9 @@ MDb.prototype.getRestarauntsCount = function() {
     return this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
 };
 
+MDb.prototype.getCousineName = function(cid) {
+    return this.getOneFieldSql("SELECT name FROM cousins WHERE id=?", "name", [cid]);
+};
 
 //----------------------------------------------------------------
 

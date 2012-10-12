@@ -27,10 +27,18 @@ function ApplicationWindow(params) {
 	var mapButton = Titanium.UI.createButton({title:'Карта'});
 	mapButton.addEventListener('click', function(e){		
 		var itemsData = masterView.tableDataFunc();
-		Ti.API.info('mapButton: ' + itemsData);
 		Ti.App.fireEvent('app:showMap', {data: itemsData});
 	});
 	masterContainerWindow.rightNavButton = mapButton;
+
+	var refreshButton = Ti.UI.createButton({
+	    systemButton : Ti.UI.iPhone.SystemButton.REFRESH
+	});
+	masterContainerWindow.leftNavButton = refreshButton;
+	refreshButton.addEventListener('click',function(){
+	   	Ti.API.info("REFRESH");
+	   	Ti.App.name = "REFRESH";
+	});	
 	
 	Ti.App.addEventListener('app:selectCousine', function(e){
 		var tempView = new CousineView({engine: engine, mdb: mdb, settings: settings});			
@@ -43,18 +51,30 @@ function ApplicationWindow(params) {
 		tempContainerView.add(tempView);
 		tempWindow.add(tempContainerView);
 
+		var oldCousineId = settings.cousineId;
 		navGroup.open(tempWindow);
 		tempWindow.addEventListener('close', function(e){
 			try{
-				var cousinRestaraunts = mdb.getCousinRestaraunts(settings.cousineId);
-				masterView.setTableData(cousinRestaraunts);	
-				masterView.updateDistance();
+				if(oldCousineId != settings.cousineId){
+					self.updateCousineRestaraunts();	
+				}				
 			} catch(e){
 				Ti.API.info('ERROR: ' + e);
 			}
 		});
 	});
 
+	self.updateCousineRestaraunts = function(){
+		var cousinRestaraunts;
+		if(settings.cousineId > -1){
+			cousinRestaraunts = mdb.getCousinRestaraunts(settings.cousineId);
+		} else {
+			cousinRestaraunts = mdb.getRestaraunts();
+		}
+		masterView.setTableData(cousinRestaraunts);			
+		masterView.updateCousineLabel();		
+		masterView.updatePositionAndTable();
+	};
 	
 	//create iOS specific NavGroup UI
 	var navGroup = Ti.UI.iPhone.createNavigationGroup({
@@ -72,7 +92,7 @@ function ApplicationWindow(params) {
 		var tempContainerView = Ti.UI.createView({layout: "vertical"});
 		tempContainerView.add(tempView);
 		tempWindow.add(tempContainerView);
-
+		tempWindow.backButtonTitle = 'Назад';
 		navGroup.open(tempWindow);
 	});
 	
@@ -82,12 +102,14 @@ function ApplicationWindow(params) {
 			//title: e.data[1].act_name
 		});	
 		tempWindow.barColor = settings.backgroundColor;
-		tempWindow.barImage = '/iphone/navBg.png';
+		tempWindow.barImage = '/iphone/navBg.png';		
+		tempWindow.backButtonTitle = 'Назад';
+		
 		var tempContainerView = Ti.UI.createView({layout: "vertical"});
 		tempContainerView.add(tempView);
 		tempWindow.add(tempContainerView);
-
 		navGroup.open(tempWindow);
+		tempView.showMapItems();
 	});
 		
 	//---------------------------------------------------------------
@@ -138,9 +160,10 @@ function ApplicationWindow(params) {
 		engine.getRestaraunts(function(data){
 												Titanium.App.fireEvent('app:showAlert',{data: "loaded restaraunts: " + data.length});
 												mdb.saveRestaraunts(data);
+												self.updateCousineRestaraunts();
 											});
 	} else {
-		Titanium.App.fireEvent('app:showAlert', {data: "Got " + restarauntCount + " Restaraunts"});	
+		//Titanium.App.fireEvent('app:showAlert', {data: "Got " + restarauntCount + " Restaraunts"});	
 	}
 	
 	return self;

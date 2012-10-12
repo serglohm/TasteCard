@@ -38,7 +38,7 @@ function DetailView(_params) {
       width: 'auto',
       layout: 'vertical'
     });
-    view.backgroundColor = '#7fc14c';
+    view.backgroundColor = '#36691e';
     view.borderRadius = '5dp';
     scrollView.add(view);
 
