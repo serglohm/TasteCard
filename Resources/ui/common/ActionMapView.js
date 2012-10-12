@@ -43,8 +43,8 @@ function ActionMapView(_params){
 	            latitude: annotation_arr[0].latitude,
 	            longitude: annotation_arr[0].longitude,
 	            animate: true,
-	            latitudeDelta: annotation_arr.length == 0 ? 0.01: 0.1,
-	            longitudeDelta: annotation_arr.length == 0 ? 0.01: 0.1
+	            latitudeDelta: annotation_arr.length == 1 ? 0.01: 0.1,
+	            longitudeDelta: annotation_arr.length == 1 ? 0.01: 0.1
 	        };
 	        
 	        setTimeout(function(){

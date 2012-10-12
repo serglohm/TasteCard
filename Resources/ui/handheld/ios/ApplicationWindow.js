@@ -11,7 +11,7 @@ function ApplicationWindow(params) {
 
 	
 	var self = Ti.UI.createWindow({
-		backgroundColor:'#ffffff'
+		backgroundColor: '#ffffff'
 	});
 	
 	//construct UI
@@ -47,6 +47,7 @@ function ApplicationWindow(params) {
 		});	
 		tempWindow.barColor = settings.backgroundColor;
 		tempWindow.barImage = '/iphone/navBg.png';
+		tempWindow.backButtonTitle = 'Назад';
 		var tempContainerView = Ti.UI.createView({layout: "vertical"});
 		tempContainerView.add(tempView);
 		tempWindow.add(tempContainerView);
