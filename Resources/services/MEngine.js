@@ -66,8 +66,11 @@ MEngine.prototype.postData = function(uri, params, callback, errorcallback){
     this.postRawData(uri, JSON.stringify(params), callback, errorcallback);
 };
 
-MEngine.prototype.getRestaraunts = function(callback){        
+MEngine.prototype.getRestaraunts = function(callback, params){        
     var uri = '/iphone_app/tastecardActions';
+    if(params){
+    	uri += "?" + params;
+    }
     this.getData(uri, callback);
 };
 

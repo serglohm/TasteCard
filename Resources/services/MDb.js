@@ -1,80 +1,70 @@
 function MDb(_params){
 	this.dbName = _params.settings.dbName;
-	var db = Ti.Database.open(this.dbName);
+	this.db = Ti.Database.open(this.dbName);
+
+	this.DB_VERSION = 1.34;
 	
-	var DB_VERSION = 1.030;
-	
-	
-	db.execute('BEGIN');
-	
-	db.execute("CREATE TABLE IF NOT EXISTS app_settings (sname VARCHAR(100) PRIMARY KEY, svalue TEXT)");
-	
-	var delete_flag = false;
-	var query = db.execute("SELECT svalue FROM app_settings WHERE sname='DB_VERSION'");
-    if (query.rowCount == 0){      
-        delete_flag = true;
-        db.execute("INSERT INTO app_settings (sname, svalue) VALUES (?, ?)", ['DB_VERSION', DB_VERSION]);
-    } else {
-    	var result = query.fieldByName('svalue');
-    	Ti.API.log('current DBVersion = ' + result)
-    	if (parseFloat(result) != DB_VERSION){
-    		delete_flag = true;
-    		db.execute("UPDATE app_settings SET svalue=? WHERE sname='DB_VERSION'", [DB_VERSION]);
-    	}	
-    }
-    query.close();
-	
-	if(delete_flag){
-		Ti.API.log('DROP TABLES');
-		db.execute("DROP TABLE IF EXISTS favourite_items");                                                        
-	    db.execute("DROP TABLE IF EXISTS restaraunts");
-		db.execute("DROP TABLE IF EXISTS restaraunts_imgs");
-		db.execute("DROP TABLE IF EXISTS restaraunts_cousins");
-		db.execute("DROP TABLE IF EXISTS cousins");
-	}
-	
-	
-    db.execute("CREATE TABLE IF NOT EXISTS restaraunts (id INTEGER PRIMARY KEY, \
-                                                                    name TEXT, \
-																	description TEXT, \
-																	conditions TEXT, \
-																	url TEXT, \
-																	adress TEXT, \
-																	plat NUMERIC, \
-																	plong NUMERIC, \
-																	telefon TEXT, \
-																	options TEXT, \
-																	date_sell_start DATETIME, \
-																	date_sell_end DATETIME, \
-																	date_edit DATETIME, \
-																	cousins_text TEXT, \
-																	taste_preview_image TEXT \
-																	)");
-                                                                    
-    db.execute("CREATE TABLE IF NOT EXISTS restaraunts_imgs (id INTEGER, url TEXT)");
-    db.execute("CREATE TABLE IF NOT EXISTS restaraunts_cousins (id INTEGER, cid INTEGER)");     
-    db.execute("CREATE TABLE IF NOT EXISTS cousins (id INTEGER PRIMARY KEY, name TEXT, items_count INTEGER)");                                                                      
-    db.execute("CREATE TABLE IF NOT EXISTS favourite_items (id INTEGER PRIMARY KEY AUTOINCREMENT, rid INTEGER)");                                                                        
-	
-	db.execute('COMMIT');
-	db.close();
-	
+	this.tablesData = {"restaraunts": ["id INTEGER PRIMARY KEY", 
+									 "name TEXT", 
+									 "description TEXT",
+									 "conditions TEXT",
+									 "url TEXT",
+									 "adress TEXT",
+									 "plat NUMERIC",
+									 "plong NUMERIC",
+									 "telefon TEXT",
+									 "options TEXT",
+									 "date_sell_start DATETIME",
+									 "date_sell_end DATETIME",
+									 "date_edit DATETIME",
+									 "cousins_text TEXT",
+									 "taste_preview_image TEXT"],
+                                                                
+	    "restaraunts_imgs": ["id INTEGER", "url TEXT"],
+	    "restaraunts_cousins": ["id INTEGER", "cid INTEGER"],
+	    "cousins": ["id INTEGER PRIMARY KEY", "name TEXT", "items_count INTEGER"],                                                                 
+	    "favourite_items": ["id INTEGER PRIMARY KEY AUTOINCREMENT", "rid INTEGER"]                                                                       
+	};
 	this.cached = {'restaraunts': {}};
-	this.editDate = 0;
-	
-	this.db = db;
+	this.editDate = "";	
 	
 	return this;
+};	
+	
+MDb.prototype.initialize = function() {	
+	this.open();
+	this.db.execute('BEGIN');
+	this.db.execute("CREATE TABLE IF NOT EXISTS app_settings (sname VARCHAR(100) PRIMARY KEY, svalue TEXT)");
+	
+	var notVersion = this.updateNotEqualSetting('DB_VERSION', this.DB_VERSION);
+        
+    if(notVersion){
+	    this.updateNotEqualSetting('EDIT_DATE', '');
+	    for(var tableName in this.tablesData){
+			this.db.execute("DROP TABLE IF EXISTS " + tableName);
+		}
+		this.createTables();
+	}
+	this.editDate = this.getSetting("EDIT_DATE");
+	this.db.execute('COMMIT');
+	this.db.close();
+	
+	Ti.API.info("this.editDate: " + this.editDate);
 };
 
-MDb.prototype.open = function(itemId) {
-	this.db = Ti.Database.open(this.dbName);
+MDb.prototype.updateSetting = function(name, value) {
+	db.execute("UPDATE app_settings SET svalue=? WHERE sname='" + name + "'", [value]);
 };
+
+MDb.prototype.getSetting = function(name) {
+	return this.getOneFieldSql("SELECT svalue FROM app_settings WHERE sname=?", "svalue", [name]);
+};
+
 MDb.prototype.saveCousins = function(data) {
 	this.open();
 	this.db.execute("DELETE FROM cousins");
 
-	for(var i = 0; i < data.length; i++){
+	for(var i = 0, data_len = data.length; i < data_len; i++){
 		var item = data[i];
 		this.db.execute("INSERT INTO cousins (id, name, items_count) VALUES (?, ?, 0)", [
 			item['id'],
@@ -87,12 +77,9 @@ MDb.prototype.saveCousins = function(data) {
 
 MDb.prototype.saveRestaraunts = function(data) {
 	this.open();
-	this.db.execute("DELETE FROM restaraunts");
-	this.db.execute("DELETE FROM restaraunts_imgs");
-	this.db.execute("DELETE FROM restaraunts_cousins");
-	var editDate = new Date(this.editDate);
+	var editDate = this.editDate != "" ? this.dateFromStr(this.editDate): this.dateFromStr('2012-09-12 01:01:01');
 	
-	for(var i = 0; i < data.length; i++){
+	for(var i = 0, data_len = data.length; i < data_len; i++){
 		try{
 			var item = data[i];
 			
@@ -123,24 +110,22 @@ MDb.prototype.saveRestaraunts = function(data) {
 					item['taste_preview_image']
 			];
 			
-			var edit_date = new Date();
-			var myRe = /(\d+)\-(\d+)\-(\d+) (\d+)\:(\d+)\:(\d+)/ig;
-			var myArray = myRe.exec(item['date_edit']);
-			if(myArray.length){
-				var y = parseInt(myArray[1]) - 1900;
-				var m = myArray[2] - 1;
-				var d = myArray[3];
-				
-				var hour = myArray[4];
-				var minute = myArray[5];
-				var seconds = myArray[6];
-				var tempDate = new Date(y, m, d, hour, minute, seconds);	
-				if (editDate < tempDate){
+			var tempDate = this.dateFromStr(item['date_edit']);
+			if(tempDate){
+				if (editDate - tempDate < 0){
 					editDate = tempDate;
+					this.editDate = item['date_edit'];
+					Ti.API.info("SET DATE_EDIT TO " + item['date_edit']);
 				}			
 			}
-			this.setCachedRestaraunt(item);
-			
+			if(this.getCachedRestaraunt(item['id'])){
+				this.db.execute("DELETE FROM restaraunts WHERE id=?", item['id']);
+				this.db.execute("DELETE FROM restaraunts_imgs WHERE id=?", item['id']);
+				this.db.execute("DELETE FROM restaraunts_cousins WHERE id=?", item['id']);
+				Ti.API.info('DELETE DATA FOR ' + item['id']);
+			} else {
+				this.setCachedRestaraunt(item);
+			}
 			this.db.execute("INSERT INTO restaraunts (id, name, description, conditions, url, adress, plat, plong, telefon, options, date_sell_start, date_sell_end, date_edit, taste_preview_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
 			var rid = this.db.getLastInsertRowId();
 						
@@ -169,13 +154,18 @@ MDb.prototype.saveRestaraunts = function(data) {
 			Ti.API.log('DB INSERT ERROR: ' + JSON.stringify(e));
 		}
 	}
+	
+	Ti.API.info("save restaraunts editDate: " + this.editDate)
+	this.updateNotEqualSetting('EDIT_DATE', this.editDate);
+	
 	this.db.close();
 	
-	Ti.API.info("editDate: " + editDate);
+	
+	
 };
 
 MDb.prototype.getCousins = function() {
-	return this.getSql("SELECT id, name, items_count FROM cousins WHERE items_count>?", ['id', 'name', 'items_count'], [1]);
+	return this.getSql("SELECT id, name, items_count FROM cousins WHERE items_count>?", ['id', 'name', 'items_count'], [0]);
 };
 
 MDb.prototype.getCousinRestaraunts = function(cid) {
@@ -193,7 +183,7 @@ MDb.prototype.setCachedRestaraunt = function(rowData) {
 MDb.prototype.getRestaraunts = function() {
     this.open();
 	var model = [];
-    var rows = this.db.execute("SELECT id, name, telefon, taste_preview_image, adress, plat, plong, cousins_text FROM restaraunts");
+    var rows = this.db.execute("SELECT id, name, telefon, taste_preview_image, adress, plat, plong, cousins_text, date_edit FROM restaraunts");
 
 	while (rows.isValidRow()){
 		var rowData = {};
@@ -204,6 +194,7 @@ MDb.prototype.getRestaraunts = function() {
         rowData.taste_preview_image = rows.fieldByName('taste_preview_image');
         rowData.plat = rows.fieldByName('plat');	
         rowData.plong = rows.fieldByName('plong');
+        rowData.date_edit = rows.fieldByName('date_edit');
         rowData.cousins_text = rows.fieldByName('cousins_text');
 
         model.push(rowData);
@@ -253,7 +244,7 @@ MDb.prototype.getCachedRestaraunt = function(id) {
 MDb.prototype.getRestaraunt = function(id) {
     this.open();
 	var model = [];
-    var rows = this.db.execute("SELECT  id, name, telefon, taste_preview_image, adress, plat, plong, conditions, description, options, cousins_text FROM restaraunts WHERE id=?", [id]);
+    var rows = this.db.execute("SELECT  id, name, telefon, taste_preview_image, adress, plat, plong, conditions, description, options, cousins_text FROM restaraunts WHERE id=?", id);
 
 	while (rows.isValidRow()){
 		var rowData = {};
@@ -273,7 +264,7 @@ MDb.prototype.getRestaraunt = function(id) {
         var imgsRows = this.db.execute("SELECT url FROM restaraunts_imgs WHERE id=?", [id]);
 		while (imgsRows.isValidRow()){
 			var url = imgsRows.fieldByName('url');
-			if(url.indexOf("71x71") < 0){
+			if(url.indexOf("71x71") < 0 && url.indexOf("142x142") < 0){
         		restaraunts_imgs.push(url);
         	}
         	imgsRows.next();
@@ -301,29 +292,63 @@ MDb.prototype.getCousineName = function(cid) {
 
 //----------------------------------------------------------------
 
+MDb.prototype.updateNotEqualSetting = function(sname, svalue) {
+	var updated = false;
+	var query = this.db.execute("SELECT svalue FROM app_settings WHERE sname=?", sname);
+    if (query.rowCount == 0){      
+        updated = true;
+        this.db.execute("INSERT INTO app_settings (sname, svalue) VALUES (?, ?)", sname, svalue);
+    } else {
+    	var result = query.fieldByName('svalue');
+    	Ti.API.info("OLD VALUE OF " + sname + " " + result);
+    	if (result != svalue){
+    		updated = true;
+    		this.db.execute("UPDATE app_settings SET svalue=? WHERE sname=?", svalue, sname);
+    		Ti.API.info("UPDATE VALUE OF " + sname + " TO " + svalue);
+    	}	
+    }
+    query.close();
+    return updated;
+};
+
+MDb.prototype.createTableSql = function(tableName, fieldNames) {
+	var sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + fieldNames.join(", ") + ")";
+	return sql;
+};
+
+MDb.prototype.open = function(itemId) {
+	this.db = Ti.Database.open(this.dbName);
+};
+
 MDb.prototype.getSql = function(sql, fields, params) {
     this.open();
 	var model = [];
-    var rows;
-    if(params){
-    	rows = this.db.execute(sql, params);
-    	Ti.API.info("execute(" + sql + ", " + params);
-    } else {
-    	rows = this.db.execute(sql);
-    }
-    Ti.API.info('fields: ' + fields);
+	/*
+	var	sql = arguments[0];
+	var fields = arguments[1];
+	var sql_arguments = [sql];
+	if(arguments.length > 2){
+		for(var i = 2; i < arguments.length; i++){
+			sql_arguments[i - 1] = arguments[i];
+		}	
+	}
+	var rows = Function.prototype.apply.call(this.db.execute, this.db, sql_arguments);
+	*/
+	var rows;
+	if(params){
+		rows = this.db.execute(sql, params);
+	} else {
+		rows = this.db.execute(sql);
+	}
 	while (rows.isValidRow()){
 		var rowData = {};
-		
 		for(var i = 0; i < fields.length; i++){
 			rowData[fields[i]] = rows.fieldByName(fields[i]);	
 		}
-		Ti.API.info(rowData);
         model.push(rowData);
         rows.next();
     }
 	rows.close();
-
     this.db.close();
     return model;
 };
@@ -331,21 +356,65 @@ MDb.prototype.getSql = function(sql, fields, params) {
 MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
     
     this.open();
-	var result = 0;
+	var result;
 	var query;
+	
+	/* 
+	var	sql = arguments[0];
+	var fieldName = arguments[1];
+	var sql_arguments = [sql];
+	if(arguments.length > 2){
+		for(var i = 2; i < arguments.length; i++){
+			sql_arguments[i - 1] = arguments[i];
+		}	
+	}
+	var query = Function.prototype.apply.call(this.db.execute, this.db, sql_arguments);
+	*/
 	if(params){
 		query = this.db.execute(sql, params);
 	} else {
 		query = this.db.execute(sql);
 	}
+	
     if (query.rowCount == 0){      
         result = 0;
     } else {
-    	result = query.fieldByName(fieldName);		
+    	var v = query.fieldByName(fieldName);	
+    	result = v;
     }
     query.close();
     this.db.close();
     return result;
+};
+
+MDb.prototype.createTables = function() {
+	for(var tableName in this.tablesData){
+		var sql = this.createTableSql(tableName, this.tablesData[tableName]);
+		this.db.execute(sql);
+	}	
+};
+
+MDb.prototype.dropTables = function() {
+	for(var tableName in this.tablesData){
+		this.db.execute("DROP TABLE IF EXISTS " + tableName); 
+	}	
+};
+
+MDb.prototype.dateFromStr = function(str) {
+	var myRe = /(\d+)\-(\d+)\-(\d+) (\d+)\:(\d+)\:(\d+)/ig;
+	var myArray = myRe.exec(str);
+	if(myArray.length){
+		var y = parseInt(myArray[1]);
+		var m = myArray[2] - 1;
+		var d = myArray[3];
+		
+		var hour = myArray[4];
+		var minute = myArray[5];
+		var seconds = myArray[6];
+		var tempDate = new Date(y, m, d, hour, minute, seconds);
+		return tempDate;
+	}
+	return 0;	
 };
 
 module.exports = MDb; 

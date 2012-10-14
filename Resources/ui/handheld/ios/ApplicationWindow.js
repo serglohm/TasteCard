@@ -37,7 +37,13 @@ function ApplicationWindow(params) {
 	masterContainerWindow.leftNavButton = refreshButton;
 	refreshButton.addEventListener('click',function(){
 	   	Ti.API.info("REFRESH");
-	   	Ti.App.name = "REFRESH";
+	   	var last_date_param = "lastdate=" + mdb.editDate;
+	   	Ti.API.info("last_date_param(" + last_date_param + ")");
+		engine.getRestaraunts(function(data){
+			Titanium.App.fireEvent('app:showAlert',{data: "loaded restaraunts: " + data.length});
+			mdb.saveRestaraunts(data);
+			self.updateCousineRestaraunts();
+		}, last_date_param);
 	});	
 	
 	Ti.App.addEventListener('app:selectCousine', function(e){

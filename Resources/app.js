@@ -36,6 +36,7 @@ if (Ti.version < 1.8 ) {
 	gParams.settings = new MSettings();
 	gParams.engine = new MEngine();	
 	gParams.mdb = new MDb({settings: gParams.settings});
+	gParams.mdb.initialize();
 
 	
 	var Window;
