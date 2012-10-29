@@ -148,12 +148,18 @@ function MasterView(params) {
 	
 	self.setTableData = function(newData){
 		var tempData = [];
+		self.tableData = [];
+		
 		for(var i = 0; i < newData.length; i++){
 			newData[i].title = newData[i].name;
-			newData[i].preview_image = newData[i].taste_preview_image;		
+			newData[i].preview_image = newData[i].taste_preview_image;	
+			
 			self.addRowToTable(newData[i], tempData);
 		}
 		table.setData(tempData);
+		self.tableData = newData;
+		
+		//Ti.API.info('self.setTableData: ' + self.tableData.length);
 	};
 	self.tableData = mdb.getRestaraunts();
 	for(var i = 0; i < self.tableData.length; i++){
@@ -194,7 +200,7 @@ function MasterView(params) {
 	self.updatePositionAndTable = function(){
 		Titanium.Geolocation.getCurrentPosition(function(e){
 			if (!e.success || e.error){
-				Ti.API.info("Code translation: "+translateErrorCode(e.code));
+				Ti.API.info("Code translation: " + translateErrorCode(e.code));
 				return;
 			}
 	

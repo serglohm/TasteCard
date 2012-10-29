@@ -34,16 +34,24 @@ function ApplicationWindow(params) {
 	var refreshButton = Ti.UI.createButton({
 	    systemButton : Ti.UI.iPhone.SystemButton.REFRESH
 	});
-	masterContainerWindow.leftNavButton = refreshButton;
-	refreshButton.addEventListener('click',function(){
-	   	Ti.API.info("REFRESH");
+	
+	//masterContainerWindow.leftNavButton = refreshButton;
+	
+	self.refreshData = function(){
+	   	//Ti.API.info("REFRESH");
 	   	var last_date_param = "lastdate=" + mdb.editDate;
-	   	Ti.API.info("last_date_param(" + last_date_param + ")");
+	   	//Ti.API.info("last_date_param(" + last_date_param + ")");
 		engine.getRestaraunts(function(data){
-			Titanium.App.fireEvent('app:showAlert',{data: "loaded restaraunts: " + data.length});
+			
+			//Titanium.App.fireEvent('app:showAlert',{data: "loaded restaraunts: " + data.length});
+			
 			mdb.saveRestaraunts(data);
 			self.updateCousineRestaraunts();
 		}, last_date_param);
+	};
+	
+	refreshButton.addEventListener('click',function(){
+		self.refreshData();
 	});	
 	
 	Ti.App.addEventListener('app:selectCousine', function(e){
@@ -165,11 +173,12 @@ function ApplicationWindow(params) {
 												mdb.saveCousins(data);
 											});
 		engine.getRestaraunts(function(data){
-												Titanium.App.fireEvent('app:showAlert',{data: "loaded restaraunts: " + data.length});
+												Titanium.App.fireEvent('app:showAlert',{data: "Рестораны загружены: " + data.length});
 												mdb.saveRestaraunts(data);
 												self.updateCousineRestaraunts();
 											});
 	} else {
+		self.refreshData();
 		//Titanium.App.fireEvent('app:showAlert', {data: "Got " + restarauntCount + " Restaraunts"});	
 	}
 	

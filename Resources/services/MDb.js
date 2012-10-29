@@ -1,8 +1,8 @@
 function MDb(_params){
 	this.dbName = _params.settings.dbName;
 	this.db = Ti.Database.open(this.dbName);
-
-	this.DB_VERSION = 1.34;
+	this.db.execute("CREATE TABLE IF NOT EXISTS app_settings (sname VARCHAR(100) PRIMARY KEY, svalue TEXT)");
+	this.DB_VERSION = 1.11;
 	
 	this.tablesData = {"restaraunts": ["id INTEGER PRIMARY KEY", 
 									 "name TEXT", 
@@ -32,22 +32,28 @@ function MDb(_params){
 };	
 	
 MDb.prototype.initialize = function() {	
+	Ti.API.info('initialize call');
 	this.open();
 	this.db.execute('BEGIN');
-	this.db.execute("CREATE TABLE IF NOT EXISTS app_settings (sname VARCHAR(100) PRIMARY KEY, svalue TEXT)");
 	
 	var notVersion = this.updateNotEqualSetting('DB_VERSION', this.DB_VERSION);
         
-    if(notVersion){
+    if(notVersion){    	
 	    this.updateNotEqualSetting('EDIT_DATE', '');
 	    for(var tableName in this.tablesData){
 			this.db.execute("DROP TABLE IF EXISTS " + tableName);
 		}
+		this.db.execute('COMMIT'); this.db.close(); this.open(); this.db.execute('BEGIN');		
+		
 		this.createTables();
+		
+		this.db.execute('COMMIT'); this.db.close();		
+    	this.open(); this.db.execute('BEGIN');		
 	}
 	this.editDate = this.getSetting("EDIT_DATE");
 	this.db.execute('COMMIT');
 	this.db.close();
+	Ti.API.info('initialize end');
 	
 	Ti.API.info("this.editDate: " + this.editDate);
 };
@@ -83,14 +89,14 @@ MDb.prototype.saveRestaraunts = function(data) {
 		try{
 			var item = data[i];
 			
-			var plat = 0; 
-			var plong = 0;
+			item['plat'] = 0; 
+			item['plong'] = 0;
 			var options = item['options'].join(",");
 			
 			if(item['coord'] != ""){
 				var coord = item['coord'].split(',');
-				plat = coord[1];
-				plong = coord[0];
+				item['plat'] = coord[1];
+				item['plong'] = coord[0];
 			}	
 			
 			var params = [
@@ -100,8 +106,8 @@ MDb.prototype.saveRestaraunts = function(data) {
 					item['conditions'], 
 					item['url'], 
 					item['adress'], 
-					plat, 
-					plong, 
+					item['plat'], 
+					item['plong'], 
 					item['telefon'], 
 					options, 
 					item['date_sell_start'], 
@@ -109,6 +115,8 @@ MDb.prototype.saveRestaraunts = function(data) {
 					item['date_edit'],
 					item['taste_preview_image']
 			];
+			
+			Ti.API.info("date_edit: " + item['date_edit']);
 			
 			var tempDate = this.dateFromStr(item['date_edit']);
 			if(tempDate){
@@ -124,6 +132,7 @@ MDb.prototype.saveRestaraunts = function(data) {
 				this.db.execute("DELETE FROM restaraunts_cousins WHERE id=?", item['id']);
 				Ti.API.info('DELETE DATA FOR ' + item['id']);
 			} else {
+				Ti.API.info('Cache Data for ' + item['id']);
 				this.setCachedRestaraunt(item);
 			}
 			this.db.execute("INSERT INTO restaraunts (id, name, description, conditions, url, adress, plat, plong, telefon, options, date_sell_start, date_sell_end, date_edit, taste_preview_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
@@ -212,11 +221,17 @@ Number.prototype.toRad = function() {
 
 MDb.prototype.getDistance = function(lat1, lon1, lat2, lon2) {
 
+	//Ti.API.info('getDistance...');
+	//Ti.API.info(lat1 + ' ' + lon1 + ' ' + lat2 + ' ' + lon2);
+	if(! ( lat1 && lon1 && lat2 && lon2 )){
+		//Ti.API.info(' .... 0');
+		return 0;
+	}
 	var R = 6371; // km
 	var dLat = (lat2-lat1).toRad();
 	var dLon = (lon2-lon1).toRad();
-	var lat1 = lat1.toRad();
-	var lat2 = lat2.toRad();
+	var lat1 = parseFloat(lat1).toRad();
+	var lat2 = parseFloat(lat2).toRad();
 	
 	var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
 	        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
@@ -312,7 +327,8 @@ MDb.prototype.updateNotEqualSetting = function(sname, svalue) {
 };
 
 MDb.prototype.createTableSql = function(tableName, fieldNames) {
-	var sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + fieldNames.join(", ") + ")";
+	//var sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + fieldNames.join(", ") + ")";
+	var sql = "CREATE TABLE " + tableName + " (" + fieldNames.join(", ") + ")";
 	return sql;
 };
 
@@ -389,8 +405,11 @@ MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
 
 MDb.prototype.createTables = function() {
 	for(var tableName in this.tablesData){
+		Ti.API.info('createTableSql(' + tableName + ')');
 		var sql = this.createTableSql(tableName, this.tablesData[tableName]);
-		this.db.execute(sql);
+		Ti.API.info(sql);
+		var result = this.db.execute(sql);
+		Ti.API.info(result);
 	}	
 };
 
@@ -398,6 +417,16 @@ MDb.prototype.dropTables = function() {
 	for(var tableName in this.tablesData){
 		this.db.execute("DROP TABLE IF EXISTS " + tableName); 
 	}	
+};
+
+MDb.prototype.showTables = function(str) {
+	Ti.API.info('show tables');
+	var rows = this.db.execute("select sql from sqlite_master");
+	while (rows.isValidRow()){
+		Ti.API.info('get table sql: ' + rows.fieldByName('sql'));
+		rows.next();
+	}
+	rows.close();
 };
 
 MDb.prototype.dateFromStr = function(str) {

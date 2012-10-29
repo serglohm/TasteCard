@@ -1,8 +1,8 @@
-#appname: TasteCardApp
-#publisher: serglohm
-#url: http://tastecardapp.filigranltd.com
-#image: appicon.png
-#appid: com.filigranltd.tastecardapp
-#desc: undefined
-#type: ipad
-#guid: 09b30186-1790-4293-9327-c1898dbdcdd2
+#appname:TasteCardApp
+#publisher:serglohm
+#url:http://tastecard.filigranltd.com
+#image:appicon.png
+#appid:com.filigranltd.tastecard
+#desc:not specified
+#type:mobile
+#guid:09b30186-1790-4293-9327-c1898dbdcdd2

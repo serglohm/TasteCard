@@ -9,16 +9,16 @@
     <deployment-targets>
         <target device="mobileweb">true</target>
         <target device="iphone">true</target>
-        <target device="ipad">true</target>
+        <target device="ipad">false</target>
         <target device="android">true</target>
         <target device="blackberry">false</target>
     </deployment-targets>
     <sdk-version>2.1.3.GA</sdk-version>
-    <id>com.filigranltd.tastecardapp</id>
-    <name>TasteCardApp</name>
+    <id>com.filigranltd.tastecard</id>
+    <name>TasteCardRu</name>
     <version>1.1</version>
     <publisher>serglohm</publisher>
-    <url>http://tastecardapp.filigranltd.com</url>
+    <url>http://tastecard.filigranltd.com</url>
     <description>not specified</description>
     <copyright>2012 by serglohm</copyright>
     <icon>appicon.png</icon>

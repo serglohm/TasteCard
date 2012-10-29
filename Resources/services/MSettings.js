@@ -1,5 +1,5 @@
 function MSettings(){
-	this.dbName = 'TasteCardDb';
+	this.dbName = 'TasteCardDb3';
 	this.backgroundColor = '#66D22C';
 	this.mainWindowTitle = 'MyMaryKay';
 	this.itemSmallDefImage = '/iphone/def71.png';
