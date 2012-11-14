@@ -1,6 +1,7 @@
 function MDb(_params){
 	this.dbName = _params.settings.dbName;
 	this.db = Ti.Database.open(this.dbName);
+	Ti.API.info('first time this.DBName = ' + this.dbName);
 	this.db.execute("CREATE TABLE IF NOT EXISTS app_settings (sname VARCHAR(100) PRIMARY KEY, svalue TEXT)");
 	this.DB_VERSION = 1.11;
 	
@@ -27,6 +28,7 @@ function MDb(_params){
 	};
 	this.cached = {'restaraunts': {}};
 	this.editDate = "";	
+	this.db.close();
 	
 	return this;
 };	
@@ -49,6 +51,8 @@ MDb.prototype.initialize = function() {
 		
 		this.db.execute('COMMIT'); this.db.close();		
     	this.open(); this.db.execute('BEGIN');		
+	} else {
+		Ti.API.info('db version ok');
 	}
 	this.editDate = this.getSetting("EDIT_DATE");
 	this.db.execute('COMMIT');
@@ -298,11 +302,17 @@ MDb.prototype.getRestaraunt = function(id) {
 
 
 MDb.prototype.getRestarauntsCount = function() {
-    return this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
+	this.open();
+    var result = this.getOneFieldSql("SELECT count(id) as cnt FROM restaraunts", "cnt");
+    this.db.close();
+    return result; 
 };
 
 MDb.prototype.getCousineName = function(cid) {
-    return this.getOneFieldSql("SELECT name FROM cousins WHERE id=?", "name", [cid]);
+    this.open();
+    var result = this.getOneFieldSql("SELECT name FROM cousins WHERE id=?", "name", [cid]);
+    this.db.close();
+    return result; 
 };
 
 //----------------------------------------------------------------
@@ -333,6 +343,7 @@ MDb.prototype.createTableSql = function(tableName, fieldNames) {
 };
 
 MDb.prototype.open = function(itemId) {
+	Ti.API.info('this.DBName = ' + this.dbName);
 	this.db = Ti.Database.open(this.dbName);
 };
 
@@ -371,7 +382,6 @@ MDb.prototype.getSql = function(sql, fields, params) {
 
 MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
     
-    this.open();
 	var result;
 	var query;
 	
@@ -399,7 +409,6 @@ MDb.prototype.getOneFieldSql = function(sql, fieldName, params) {
     	result = v;
     }
     query.close();
-    this.db.close();
     return result;
 };
 

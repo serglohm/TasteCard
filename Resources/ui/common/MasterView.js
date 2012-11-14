@@ -1,7 +1,7 @@
 //Master View Component Constructor
-function MasterView(params) {
-	var settings = params.settings;
-	var mdb = params.mdb;
+function MasterView(_params) {
+	var settings = _params.settings;
+	var mdb = _params.mdb;
 	
 	var itemsData = {};
 	
@@ -88,13 +88,14 @@ function MasterView(params) {
 			left: '5dp', top: '5dp',
 			height: '71', width: '71',
 			itemID: _rowdata.id,
-			image: _rowdata.preview_image
+			//image: _rowdata.preview_image
 		});
 		if(_rowdata.preview_image.indexOf('142') > -1){
 			img.hires = true;
 		}
 		img.defaultImage = settings.itemSmallDefImage;
 		imageBgView.add(img);
+		imageBgView.visible = false;
 		bckView.add(imageBgView);
 		
 		newRow.add(bckView);
@@ -194,13 +195,14 @@ function MasterView(params) {
 		return self.tableData;
 	};
 	
+	Ti.Geolocation.preferredProvider = Titanium.Geolocation.PROVIDER_GPS;
 	Titanium.Geolocation.accuracy = Titanium.Geolocation.ACCURACY_BEST;	
 	Titanium.Geolocation.distanceFilter = 10;
 	Titanium.Geolocation.purpose = "Получаем Ваши координаты";	
 	self.updatePositionAndTable = function(){
 		Titanium.Geolocation.getCurrentPosition(function(e){
 			if (!e.success || e.error){
-				Ti.API.info("Code translation: " + translateErrorCode(e.code));
+				// Ti.API.info("Code translation: " + translateErrorCode(e.code));
 				return;
 			}
 	
